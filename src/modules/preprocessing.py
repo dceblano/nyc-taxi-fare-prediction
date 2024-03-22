@@ -1,7 +1,5 @@
 import pandas as pd
 from sklearn.impute import SimpleImputer
-import seaborn as sns
-import matplotlib.pyplot as plt
 import time
 
 def perform_cleanup(df):
@@ -65,31 +63,25 @@ def perform_cleanup(df):
     return df
 
 def data_scope(df):
-    # Creating variables for the features 
+    """
+    Filters the DataFrame to include only payment types with values 1 and 2 and positive fare_amount.
+
+    Parameters:
+        df (DataFrame): The original DataFrame containing taxi fare data.
+
+    Returns:
+        DataFrame: Filtered DataFrame containing payment types 1 and 2 with positive fare_amount.
+
+    Features Used:
+        - fare_amount: Column representing the fare amount.
+        - payment_type: Column representing the payment type.
+
+    """
     fare = 'fare_amount'
     paytype = 'payment_type'
 
-    # Count number of entries
-    count = len(df)
-
     # Filter DataFrame to include only payment types with values 1 and 2 and positive fare_amount
     scope_df = df[(df[paytype].isin([1, 2])) & (df[fare] > 0)]
-
-    # Final count after filtering payment types and negative fare amounts
-    final_count = len(scope_df)
-
-    # Check how many entries where removed
-    removed = count - final_count 
-
-    # Print the count
-    print('\nNumber entries', count)
-    print('Payment Type 1 or 2 & Fare Amount greater than 0 :', final_count)
-    print('Total entries removed', removed)
-
-    # Get statistical details
-    data_desc = scope_df[fare].describe()
-    print('\nStatistical Details:')
-    print(data_desc)
 
     return scope_df
 
@@ -104,13 +96,33 @@ def handle_outliers(df):
     Returns:
     - df_no_outliers: DataFrame with outliers removed.'''
 
-    start_time = time.time()  # Record the start time
+    # Record the start time for runtime calculation.
+    start_time = time.time()
 
-    # Creating variables for the features 
+    # Creating variable for the feature
     fare = 'fare_amount'
 
-    # Get the data scope
+    # Get the data scope by filtering payment types 1 and 2 with positive fare amounts.
     scope_df = data_scope(df)
+
+    # Count number of entries
+    count = len(df)
+
+    # Final count after filtering payment types and negative fare amounts
+    final_count = len(scope_df)
+
+    # Check how many entries where removed
+    removed = count - final_count 
+
+    # Print the count of entries before and after filtering.
+    print('\nNumber entries', count)
+    print('Payment Type 1 or 2 & Fare Amount greater than 0 :', final_count)
+    print('Total entries removed', removed)
+
+    # Print statistical details of fare_amount after filtering.
+    data_desc = scope_df[fare].describe()
+    print('\nStatistical Details:')
+    print(data_desc)
 
     # Calculate the first quartile (Q1) and third quartile (Q3)
     Q1 = scope_df[fare].quantile(0.25)
@@ -123,18 +135,20 @@ def handle_outliers(df):
     lower_bound = Q1 - 1.5 * IQR
     upper_bound = Q3 + 1.5 * IQR
 
-    print('\nLower Bound:', lower_bound)
-    print('Upper Bound:', upper_bound)
-
     # Find maximum and minimum value
     max_value = scope_df[fare].max()
     min_value = scope_df[fare].min()
+
+    # Print outlier boundaries and maximum/minimum values of fare_amount.
+    print('\nLower Bound:', lower_bound)
+    print('Upper Bound:', upper_bound)
     print("\nMaximum value in column '{}' is: {}".format(fare, max_value))
     print("Minimum value in column '{}' is: {}".format(fare, min_value))
 
     # Filter the DataFrame to remove outliers
     df_no_outliers = scope_df[(scope_df[fare] >= lower_bound) & (scope_df[fare] <= upper_bound)]
 
+    # Print the number of records before and after removing outliers, and the number of outliers.
     print("\nNumber of records before removing outliers:", len(scope_df))
     print("Number of records after removing outliers:", len(df_no_outliers))
     print("Number of outliers", len(scope_df)-len(df_no_outliers))
@@ -152,26 +166,11 @@ def handle_outliers(df):
     print('\nStatistical Information:')
     print(data_description)
 
+    # Print maximum and minimum values of fare_amount after removing outliers.
     print("\nMaximum value in column '{}' is: {}".format(fare, max_value))
     print("Minimum value in column '{}' is: {}".format(fare, min_value))
-
-    # Plot boxplot of 'fare_amount' before handling outliers
-    plt.figure(figsize=(14, 6))
-    plt.subplot(1, 2, 1) 
-    sns.boxplot(y=scope_df[fare])
-    plt.title('Boxplot of Fare Amount')
-    plt.ylabel('Fare Amount ($)')
-
-    # Plot boxplot of 'fare_amount' after handling outliers
-    plt.subplot(1, 2, 2) 
-    sns.boxplot(y=df_no_outliers[fare])
-    plt.title('After Handling Outliers')
-    plt.ylabel('Fare Amount ($)')
-
-    # Show the plots
-    plt.tight_layout()
-    plt.show()
     
+    # Record the end time for runtime calculation and print the runtime.
     end_time = time.time()  # Record the end time
     runtime = end_time - start_time  # Calculate the elapsed time
     print("\nRuntime[handle_outliers]:", runtime, "seconds\n")  # Print the runtime
