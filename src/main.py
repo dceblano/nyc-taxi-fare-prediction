@@ -6,7 +6,7 @@ from modules.preprocessing import perform_cleanup
 from modules.preprocessing import data_scope
 from modules.preprocessing import handle_outliers
 from modules.transform import data_transform
-from modules.visualization import box_plot
+from modules.visualization import box_plot, plot_features
 
 
 def main():
@@ -29,7 +29,8 @@ def main():
 
     # Visualization
     print("#5 Visualizations")
-
+    visualization = plot_features(cleaned_df)
+    
     # Get the scope before remove outliers
     data_scope_df = data_scope(cleaned_df)
 
