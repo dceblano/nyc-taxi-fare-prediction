@@ -1,56 +1,75 @@
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report
 
-# Simulate a predict_demand function
+# Example function to simulate demand prediction
 def predict_demand(time, date, zone):
-    # This function would actually call the time series model to get predicted demand
-    # For demonstration, we return a random integer mimicking demand prediction
-    return np.random.randint(50, 200)
+    # This is a placeholder function. Replace it with the actual time series model's prediction method.
+    return np.random.randint(100, 200)
 
-# Simulated historical data
+# Simulating historical data for the sake of example
 historical_data = {
     'Downtown': {
-        '12:00': {'Historical_Avg_Trip_Length': 3.2, 'Historical_Avg_Fare': 15.5},
-        '18:00': {'Historical_Avg_Trip_Length': 2.8, 'Historical_Avg_Fare': 18.0}
-    },
-    'Uptown': {
-        '12:00': {'Historical_Avg_Trip_Length': 2.5, 'Historical_Avg_Fare': 12.0},
-        '18:00': {'Historical_Avg_Trip_Length': 3.0, 'Historical_Avg_Fare': 20.0}
+        '12:00': {
+            'Historical_Avg_Trip_Length': 3.2,
+            'Historical_Avg_Fare': 15.5
+        }
     }
 }
 
-# Assuming the logistic regression model is already trained and named as `model`
-# For demonstration, we will create a logistic regression model with random coefficients
-model = LogisticRegression()
-model.coef_ = np.array([[0.5, -0.1, 0.05]])
-model.intercept_ = np.array([-1.25])
+# Simulated taxi trip data for model training
+np.random.seed(42)
+n_samples = 1000
+data = {
+    'Trip_distance': np.random.uniform(0, 10, n_samples),
+    'Passenger_count': np.random.randint(1, 6, n_samples),
+    'Fare_amount': np.random.uniform(5, 50, n_samples),
+    'Predicted_Demand': np.random.randint(100, 200, n_samples)  # Simulated demand predictions
+}
 
-# Function to predict trip type
-def predict_trip_type(time, date, zone, predict_demand, historical_data, model):
-    demand = predict_demand(time, date, zone)
-    
-    # Retrieve historical data for the given zone and time
-    features = historical_data.get(zone, {}).get(time, None)
-    
-    if features:
-        # Add the demand prediction to your features
-        features['Predicted_Demand'] = demand
-        
-        # Prepare the feature vector for prediction
-        X = np.array([features['Historical_Avg_Trip_Length'], features['Historical_Avg_Fare'], features['Predicted_Demand']])
-        X = X.reshape(1, -1)  # Reshape for a single prediction
-        
-        # Predict the trip type
-        trip_type = model.predict(X)  # 0 for short trip, 1 for long trip
-        
-        return "Long Trip" if trip_type == 1 else "Short Trip"
-    else:
-        return "Data not available for the specified time and zone"
+df = pd.DataFrame(data)
+df['Trip_Type'] = (df['Trip_distance'] >= 2).astype(int)  # Binary target for trip length
+
+# Splitting the dataset
+X = df[['Trip_distance', 'Passenger_count', 'Fare_amount', 'Predicted_Demand']]
+y = df['Trip_Type']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Training the logistic regression model
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+# Updated predict_trip_type function integrating time series model prediction
+def predict_trip_type(time, date, zone, model, historical_data):
+    # Replace this line with the actual prediction from the time series model
+    # demand = predict_demand(time, date, zone)  # This line needs to be replaced
+    demand = predict_demand(time, date, zone)  # Replace with actual prediction
+
+    features = historical_data.get(zone, {}).get(time, {})
+
+    if not features:
+        return "No historical data available"
+
+    # Here you should add a default passenger count or derive it from historical data if available
+    # For the sake of example, let's use the average passenger count of 3
+    avg_passenger_count = 3
+
+    # Now you create an array with 4 features. The order must match the order used during training
+    X = np.array([[
+        features['Historical_Avg_Trip_Length'],  # This matches Trip_distance from the training data
+        avg_passenger_count,                     # This is the missing Passenger_count feature
+        features['Historical_Avg_Fare'],         # This matches Fare_amount from the training data
+        demand                                   # This should be replaced with the predicted demand
+    ]])
+
+    trip_type = model.predict(X)
+    return "Long Trip" if trip_type == 1 else "Short Trip"
 
 # Example usage
 time = "12:00"
 date = "2023-03-15"
 zone = "Downtown"
-result = predict_trip_type(time, date, zone, predict_demand, historical_data, model)
+result = predict_trip_type(time, date, zone, model, historical_data)
 print(result)

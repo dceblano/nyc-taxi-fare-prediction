@@ -1,8 +1,17 @@
 import pandas as pd
-from sklearn.impute import SimpleImputer
+from sklearn.impute import KNNImputer
+from sklearn.preprocessing import OrdinalEncoder
+from read_parquet import get_parquet
 import seaborn as sns
 import matplotlib.pyplot as plt
 import time
+
+# Load the dataset
+print("Reading Parquet Files")
+
+df = get_parquet()
+
+print("Reading Successfully!")
 
 def perform_cleanup(df):
     start_time = time.time()  # Record the start time
